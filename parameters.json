@@ -1,0 +1,21 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "namedValues_cielloscompressdecompress_key_value": {
+            "value": null
+        },
+        "sites_CiellosCompressDecompress_name": {
+            "value": null
+        },
+        "serverfarms_ASP_CompressDecompress_8689_name": {
+            "value": null
+        },
+        "storageAccounts_storageaccountcompraeb0_name": {
+            "value": null
+        },
+        "service_CiellosCompressDecompress_apim_name": {
+            "value": null
+        }
+    }
+}
