@@ -2,32 +2,32 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "namedValues_cielloscompressdecompress_key_value": {
+    "key_value": {
       "type": "SecureString"
     },
-    "sites_CiellosCompressDecompress_name": {
+    "siteName": {
       "defaultValue": "CiellosCompressDecompress",
       "type": "String"
     },
-    "serverfarms_ASP_CompressDecompress_8689_name": {
+    "serverPlan": {
       "defaultValue": "ASP-CompressDecompress-8689",
       "type": "String"
     },
-    "storageAccounts_storageaccountcompraeb0_name": {
-      "defaultValue": "storageaccountcompraeb0",
-      "type": "String"
-    },
-    "service_CiellosCompressDecompress_apim_name": {
-      "defaultValue": "CiellosCompressDecompress-apim",
+    "publisherName": {
+      "defaultValue": "Ciellos",
       "type": "String"
     }
   },
-  "variables": {},
+  "variables": {
+    "apiKey": "[concat(parameters('siteName'), '-key')]",
+    "serviceApimName": "[concat(parameters('siteName'), '-apim')]",
+    "storageAccountName": "[concat(parameters('siteName'), 'sa01')]"
+  },
   "resources": [
     {
       "type": "Microsoft.ApiManagement/service",
       "apiVersion": "2019-12-01",
-      "name": "[parameters('service_CiellosCompressDecompress_apim_name')]",
+      "name": "[variables('serviceApimName')]",
       "location": "Central US",
       "sku": {
         "name": "Consumption",
@@ -35,12 +35,12 @@
       },
       "properties": {
         "publisherEmail": "yevgenii.romanov@ciellos.com",
-        "publisherName": "Ciellos",
+        "publisherName": "[parameters('publisherName')]",
         "notificationSenderEmail": "apimgmt-noreply@mail.windowsazure.com",
         "hostnameConfigurations": [
           {
             "type": "Proxy",
-            "hostName": "cielloscompressdecompress-apim.azure-api.net",
+            "hostName": "[concat(variables('serviceApimName'), '.azure-api.net')]",
             "negotiateClientCertificate": false,
             "defaultSslBinding": true
           }
@@ -60,7 +60,7 @@
     {
       "type": "Microsoft.Storage/storageAccounts",
       "apiVersion": "2019-06-01",
-      "name": "[parameters('storageAccounts_storageaccountcompraeb0_name')]",
+      "name": "[variables('storageAccountName')]",
       "location": "centralus",
       "tags": {
         "Description": "Compress and decompress functions for FnO"
@@ -96,7 +96,7 @@
     {
       "type": "Microsoft.Web/serverfarms",
       "apiVersion": "2018-02-01",
-      "name": "[parameters('serverfarms_ASP_CompressDecompress_8689_name')]",
+      "name": "[parameters('serverPlan')]",
       "location": "Central US",
       "tags": {
         "Description": "Compress and decompress functions for FnO"
@@ -123,16 +123,16 @@
     {
       "type": "Microsoft.ApiManagement/service/apis",
       "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('service_CiellosCompressDecompress_apim_name'), '/ciellos-compress-decompress-functions')]",
+      "name": "[concat(variables('serviceApimName'), '/' , parameters('siteName'), '-functions')]",
       "dependsOn": [
-        "[resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name'))]"
+        "[resourceId('Microsoft.ApiManagement/service', variables('serviceApimName'))]"
       ],
       "properties": {
         "displayName": "Ciellos Compress Decompress functions",
         "apiRevision": "1",
         "description": "Compress Decompress Functions",
         "subscriptionRequired": true,
-        "path": "CiellosCompressDecompress",
+        "path": "[parameters('siteName')]",
         "protocols": [
           "https"
         ],
@@ -142,19 +142,19 @@
     {
       "type": "Microsoft.ApiManagement/service/backends",
       "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('service_CiellosCompressDecompress_apim_name'), '/cielloscompressdecompress')]",
+      "name": "[concat(variables('serviceApimName'), '/' , parameters('siteName'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name'))]"
+        "[resourceId('Microsoft.ApiManagement/service', variables('serviceApimName'))]"
       ],
       "properties": {
-        "description": "CiellosCompressDecompress",
-        "url": "https://cielloscompressdecompress.azurewebsites.net/api",
+        "description": "[parameters('siteName')]",
+        "url": "[concat('https://', parameters('siteName'), '.azurewebsites.net/api')]",
         "protocol": "http",
         "resourceId": "https://management.azure.com/subscriptions/3fd2f0db-c392-4b69-8bd0-348a5b67ce39/resourcegroups/CompressDecompress/providers/Microsoft.Web/sites/CiellosCompressDecompress",
         "credentials": {
           "header": {
             "x-functions-key": [
-              "{{cielloscompressdecompress-key}}"
+              "{{ciellostestcd-key}}"
             ]
           }
         }
@@ -163,27 +163,27 @@
     {
       "type": "Microsoft.ApiManagement/service/namedValues",
       "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('service_CiellosCompressDecompress_apim_name'), '/cielloscompressdecompress-key')]",
+      "name": "[concat(variables('serviceApimName'), '/' , variables('apiKey'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name'))]"
+        "[resourceId('Microsoft.ApiManagement/service', variables('serviceApimName'))]"
       ],
       "properties": {
-        "displayName": "cielloscompressdecompress-key",
+        "displayName": "[variables('apiKey')]",
         "tags": [
           "key",
           "function",
           "auto"
         ],
         "secret": true,
-        "value": "[parameters('namedValues_cielloscompressdecompress_key_value')]"
+        "value": "[parameters('key_value')]"
       }
     },
     {
       "type": "Microsoft.ApiManagement/service/policies",
       "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('service_CiellosCompressDecompress_apim_name'), '/policy')]",
+      "name": "[concat(variables('serviceApimName'), '/policy')]",
       "dependsOn": [
-        "[resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name'))]"
+        "[resourceId('Microsoft.ApiManagement/service', variables('serviceApimName'))]"
       ],
       "properties": {
         "value": "<!--\r\n    IMPORTANT:\r\n    - Policy elements can appear only within the <inbound>, <outbound>, <backend> section elements.\r\n    - Only the <forward-request> policy element can appear within the <backend> section element.\r\n    - To apply a policy to the incoming request (before it is forwarded to the backend service), place a corresponding policy element within the <inbound> section element.\r\n    - To apply a policy to the outgoing response (before it is sent back to the caller), place a corresponding policy element within the <outbound> section element.\r\n    - To add a policy position the cursor at the desired insertion point and click on the round button associated with the policy.\r\n    - To remove a policy, delete the corresponding policy statement from the policy document.\r\n    - Policies are applied in the order of their appearance, from the top down.\r\n-->\r\n<policies>\r\n  <inbound></inbound>\r\n  <backend>\r\n    <forward-request />\r\n  </backend>\r\n  <outbound></outbound>\r\n</policies>",
@@ -193,12 +193,12 @@
     {
       "type": "Microsoft.ApiManagement/service/properties",
       "apiVersion": "2019-01-01",
-      "name": "[concat(parameters('service_CiellosCompressDecompress_apim_name'), '/cielloscompressdecompress-key')]",
+      "name": "[concat(variables('serviceApimName'), '/' , variables('apiKey'))]",
       "dependsOn": [
-        "[resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name'))]"
+        "[resourceId('Microsoft.ApiManagement/service', variables('serviceApimName'))]"
       ],
       "properties": {
-        "displayName": "cielloscompressdecompress-key",
+        "displayName": "[variables('apiKey')]",
         "value": "/BpvF4pggjOMU7NjMPYfpHM8wn9ideRN4YZWZzPvT7lJeTLQhDzzGg==",
         "tags": [
           "key",
@@ -208,26 +208,13 @@
         "secret": true
       }
     },
-    {
-      "type": "Microsoft.ApiManagement/service/subscriptions",
-      "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('service_CiellosCompressDecompress_apim_name'), '/master')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name'))]"
-      ],
-      "properties": {
-        "scope": "[concat(resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name')), '/')]",
-        "displayName": "Built-in all-access subscription",
-        "state": "active",
-        "allowTracing": true
-      }
-    },
+
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices",
       "apiVersion": "2019-06-01",
-      "name": "[concat(parameters('storageAccounts_storageaccountcompraeb0_name'), '/default')]",
+      "name": "[concat(variables('storageAccountName'), '/default')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_storageaccountcompraeb0_name'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "sku": {
         "name": "Standard_LRS",
@@ -245,9 +232,9 @@
     {
       "type": "Microsoft.Storage/storageAccounts/fileServices",
       "apiVersion": "2019-06-01",
-      "name": "[concat(parameters('storageAccounts_storageaccountcompraeb0_name'), '/default')]",
+      "name": "[concat(variables('storageAccountName'), '/default')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_storageaccountcompraeb0_name'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "sku": {
         "name": "Standard_LRS",
@@ -262,10 +249,10 @@
     {
       "type": "Microsoft.Web/sites",
       "apiVersion": "2018-11-01",
-      "name": "[parameters('sites_CiellosCompressDecompress_name')]",
+      "name": "[parameters('siteName')]",
       "location": "Central US",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_ASP_CompressDecompress_8689_name'))]"
+        "[resourceId('Microsoft.Web/serverfarms', parameters('serverPlan'))]"
       ],
       "tags": {
         "Description": "Compress and decompress functions for FnO"
@@ -275,17 +262,17 @@
         "enabled": true,
         "hostNameSslStates": [
           {
-            "name": "cielloscompressdecompress.azurewebsites.net",
+            "name": "[concat(parameters('siteName'), '.azurewebsites.net')]",
             "sslState": "Disabled",
             "hostType": "Standard"
           },
           {
-            "name": "cielloscompressdecompress.scm.azurewebsites.net",
+            "name": "[concat(parameters('siteName'), '.scm.azurewebsites.net')]",
             "sslState": "Disabled",
             "hostType": "Repository"
           }
         ],
-        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverfarms_ASP_CompressDecompress_8689_name'))]",
+        "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', parameters('serverPlan'))]",
         "reserved": false,
         "isXenon": false,
         "hyperV": false,
@@ -298,15 +285,30 @@
         "dailyMemoryTimeQuota": 0,
         "httpsOnly": false,
         "redundancyMode": "None"
-      }
+      },
+      "resources": [
+        {
+          "type": "sourcecontrols",
+          "name": "web",
+          "apiVersion": "2015-08-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
+          ],
+          "properties": {
+            "RepoUrl": "https://github.com/remixod/FnO-DMF-Import-Export-Azure-Functions.git",
+            "branch": "master",
+            "IsManualIntegration": true
+          }
+        }
+      ]
     },
     {
       "type": "Microsoft.Web/sites/config",
       "apiVersion": "2018-11-01",
-      "name": "[concat(parameters('sites_CiellosCompressDecompress_name'), '/web')]",
+      "name": "[concat(parameters('siteName'), '/web')]",
       "location": "Central US",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('sites_CiellosCompressDecompress_name'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
       ],
       "tags": {
         "Description": "Compress and decompress functions for FnO"
@@ -323,10 +325,6 @@
           "default.aspx",
           "index.php"
         ],
-        "RepoUrl": "https://github.com/remixod/FnO-DMF-Import-Export-Azure-Functions.git",
-        "branch": "master",
-        "publishRunbook": true,
-        "IsManualIntegration": true,
         "netFrameworkVersion": "v4.0",
         "phpVersion": "5.6",
         "requestTracingEnabled": false,
@@ -389,10 +387,10 @@
     {
       "type": "Microsoft.Web/sites/functions",
       "apiVersion": "2018-11-01",
-      "name": "[concat(parameters('sites_CiellosCompressDecompress_name'), '/Compress')]",
+      "name": "[concat(parameters('siteName'), '/Compress')]",
       "location": "Central US",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('sites_CiellosCompressDecompress_name'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
       ],
       "properties": {
         "script_root_path_href": "https://cielloscompressdecompress.azurewebsites.net/admin/vfs/site/wwwroot/Compress/",
@@ -406,10 +404,10 @@
     {
       "type": "Microsoft.Web/sites/functions",
       "apiVersion": "2018-11-01",
-      "name": "[concat(parameters('sites_CiellosCompressDecompress_name'), '/Decompress')]",
+      "name": "[concat(parameters('siteName'), '/Decompress')]",
       "location": "Central US",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('sites_CiellosCompressDecompress_name'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
       ],
       "properties": {
         "script_root_path_href": "https://cielloscompressdecompress.azurewebsites.net/admin/vfs/site/wwwroot/Decompress/",
@@ -423,55 +421,24 @@
     {
       "type": "Microsoft.Web/sites/hostNameBindings",
       "apiVersion": "2018-11-01",
-      "name": "[concat(parameters('sites_CiellosCompressDecompress_name'), '/', parameters('sites_CiellosCompressDecompress_name'), '.azurewebsites.net')]",
+      "name": "[concat(parameters('siteName'), '/', parameters('siteName'), '.azurewebsites.net')]",
       "location": "Central US",
       "dependsOn": [
-        "[resourceId('Microsoft.Web/sites', parameters('sites_CiellosCompressDecompress_name'))]"
+        "[resourceId('Microsoft.Web/sites', parameters('siteName'))]"
       ],
       "properties": {
-        "siteName": "CiellosCompressDecompress",
+        "siteName": "[parameters('siteName')]",
         "hostNameType": "Verified"
       }
     },
-    {
-      "type": "Microsoft.ApiManagement/service/apis/operations",
-      "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('service_CiellosCompressDecompress_apim_name'), '/ciellos-compress-decompress-functions/post-compress')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('service_CiellosCompressDecompress_apim_name'), 'ciellos-compress-decompress-functions')]",
-        "[resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name'))]"
-      ],
-      "properties": {
-        "displayName": "Compress",
-        "method": "POST",
-        "urlTemplate": "/Compress",
-        "templateParameters": [],
-        "responses": []
-      }
-    },
-    {
-      "type": "Microsoft.ApiManagement/service/apis/operations",
-      "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('service_CiellosCompressDecompress_apim_name'), '/ciellos-compress-decompress-functions/post-decompress')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('service_CiellosCompressDecompress_apim_name'), 'ciellos-compress-decompress-functions')]",
-        "[resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name'))]"
-      ],
-      "properties": {
-        "displayName": "Decompress",
-        "method": "POST",
-        "urlTemplate": "/Decompress",
-        "templateParameters": [],
-        "responses": []
-      }
-    },
+
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2019-06-01",
-      "name": "[concat(parameters('storageAccounts_storageaccountcompraeb0_name'), '/default/azure-webjobs-hosts')]",
+      "name": "[concat(variables('storageAccountName'), '/default/azure-webjobs-hosts')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccounts_storageaccountcompraeb0_name'), 'default')]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_storageaccountcompraeb0_name'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "properties": {
         "publicAccess": "None"
@@ -480,10 +447,10 @@
     {
       "type": "Microsoft.Storage/storageAccounts/blobServices/containers",
       "apiVersion": "2019-06-01",
-      "name": "[concat(parameters('storageAccounts_storageaccountcompraeb0_name'), '/default/azure-webjobs-secrets')]",
+      "name": "[concat(variables('storageAccountName'), '/default/azure-webjobs-secrets')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', parameters('storageAccounts_storageaccountcompraeb0_name'), 'default')]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_storageaccountcompraeb0_name'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/blobServices', variables('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "properties": {
         "publicAccess": "None"
@@ -492,41 +459,13 @@
     {
       "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
       "apiVersion": "2019-06-01",
-      "name": "[concat(parameters('storageAccounts_storageaccountcompraeb0_name'), '/default/cielloscompressdecompress9da3')]",
+      "name": "[concat(variables('storageAccountName'), '/default/cielloscompressdecompress9da3')]",
       "dependsOn": [
-        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', parameters('storageAccounts_storageaccountcompraeb0_name'), 'default')]",
-        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccounts_storageaccountcompraeb0_name'))]"
+        "[resourceId('Microsoft.Storage/storageAccounts/fileServices', variables('storageAccountName'), 'default')]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
       ],
       "properties": {
         "shareQuota": 5120
-      }
-    },
-    {
-      "type": "Microsoft.ApiManagement/service/apis/operations/policies",
-      "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('service_CiellosCompressDecompress_apim_name'), '/ciellos-compress-decompress-functions/post-compress/policy')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('service_CiellosCompressDecompress_apim_name'), 'ciellos-compress-decompress-functions', 'post-compress')]",
-        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('service_CiellosCompressDecompress_apim_name'), 'ciellos-compress-decompress-functions')]",
-        "[resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name'))]"
-      ],
-      "properties": {
-        "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"cielloscompressdecompress\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
-        "format": "xml"
-      }
-    },
-    {
-      "type": "Microsoft.ApiManagement/service/apis/operations/policies",
-      "apiVersion": "2019-12-01",
-      "name": "[concat(parameters('service_CiellosCompressDecompress_apim_name'), '/ciellos-compress-decompress-functions/post-decompress/policy')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.ApiManagement/service/apis/operations', parameters('service_CiellosCompressDecompress_apim_name'), 'ciellos-compress-decompress-functions', 'post-decompress')]",
-        "[resourceId('Microsoft.ApiManagement/service/apis', parameters('service_CiellosCompressDecompress_apim_name'), 'ciellos-compress-decompress-functions')]",
-        "[resourceId('Microsoft.ApiManagement/service', parameters('service_CiellosCompressDecompress_apim_name'))]"
-      ],
-      "properties": {
-        "value": "<policies>\r\n  <inbound>\r\n    <base />\r\n    <set-backend-service id=\"apim-generated-policy\" backend-id=\"cielloscompressdecompress\" />\r\n  </inbound>\r\n  <backend>\r\n    <base />\r\n  </backend>\r\n  <outbound>\r\n    <base />\r\n  </outbound>\r\n  <on-error>\r\n    <base />\r\n  </on-error>\r\n</policies>",
-        "format": "xml"
       }
     }
   ]

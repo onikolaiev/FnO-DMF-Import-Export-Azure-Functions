@@ -2,20 +2,14 @@
   "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
   "contentVersion": "1.0.0.0",
   "parameters": {
-    "namedValues_cielloscompressdecompress_key_value": {
+    "key_value": {
       "value": "123123123123"
     },
-    "sites_CiellosCompressDecompress_name": {
-      "value": "CiellosCompressDecompress"
+    "siteName": {
+      "value": "ciellostestcd"
     },
-    "serverfarms_ASP_CompressDecompress_8689_name": {
-      "value": "CiellosCompressDecompress-apim"
-    },
-    "storageAccounts_storageaccountcompraeb0_name": {
-      "value": "cielloscdstorageaccount1"
-    },
-    "service_CiellosCompressDecompress_apim_name": {
-      "value": "CiellosCompressDecompress-apim-service"
+    "publisherName": {
+      "value": "Ciellos"
     }
   }
 }
